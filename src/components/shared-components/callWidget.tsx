@@ -1,6 +1,6 @@
-// components/CallWidget.tsx
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
 import { RootState, AppDispatch } from '@/store/store';
 import { Button } from '@/components/ui/button';
 import { Phone, Mic, Grid, VolumeX, PhoneOff } from 'lucide-react';
@@ -34,12 +34,34 @@ const CallWidget: React.FC = () => {
     localStorage.setItem('callWidgetState', JSON.stringify(state));
   };
 
+  // API Call: Dial Number
+  const dialNumberApi = async (number: string) => {
+    try {
+      const response = await axios.post('/api/dial', { number });
+      console.log('Dial response:', response.data);
+    } catch (error) {
+      console.error('Error dialing number:', error);
+    }
+  };
+
+  // API Call: Initiate Call
+  const initiateCallApi = async (number: string) => {
+    try {
+      const response = await axios.post('/api/call', { number });
+      console.log('Call initiated:', response.data);
+      dispatch(initiateCall());
+    } catch (error) {
+      console.error('Error initiating call:', error);
+    }
+  };
+
   useEffect(() => {
     loadStateFromLocalStorage();
     const handleKeyDown = (event: KeyboardEvent) => {
       const validKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '#'];
       if (validKeys.includes(event.key)) {
         dispatch(handleDial(event.key));
+        dialNumberApi(event.key);
       }
 
       if (event.key === 'Backspace') {
@@ -66,7 +88,7 @@ const CallWidget: React.FC = () => {
         className={`rounded-full bg-green-500 text-white hover:bg-green-600 w-16 h-16 flex items-center justify-center shadow-lg ${isCallActive ? 'bg-red-500 hover:bg-red-600' : ''}`}
         onClick={() => dispatch(toggleCall())}
       >
-        <Phone className="w-8 h-8" />
+        <Grid className="w-6 h-6" />
       </Button>
 
       {/* Expanded Call Area */}
@@ -92,7 +114,10 @@ const CallWidget: React.FC = () => {
                       key={key}
                       variant="ghost"
                       className="bg-gray-800 text-white border border-gray-600 rounded-full py-4 flex items-center justify-center"
-                      onClick={() => dispatch(handleDial(key))}
+                      onClick={() => {
+                        dispatch(handleDial(key));
+                        dialNumberApi(key); 
+                      }}
                     >
                       {key}
                     </Button>
@@ -111,7 +136,7 @@ const CallWidget: React.FC = () => {
                   <Button
                     variant="primary"
                     className="bg-green-500 text-white w-full rounded-full"
-                    onClick={() => dispatch(initiateCall())}
+                    onClick={() => initiateCallApi(dialedNumber)} // Send API request on call
                   >
                     <Phone className="w-5 h-5" />
                     <span className="ml-2">Call</span>
@@ -119,7 +144,7 @@ const CallWidget: React.FC = () => {
                 </div>
 
                 {/* Controls at the bottom */}
-                <div className="flex justify-around items-center mt-4">
+                {/* <div className="flex justify-around items-center mt-4">
                   <Button
                     variant="ghost"
                     className="text-white rounded-full p-2 bg-gray-800"
@@ -127,7 +152,7 @@ const CallWidget: React.FC = () => {
                   >
                     <Grid className="w-6 h-6" />
                   </Button>
-                </div>
+                </div> */}
               </div>
             </>
           ) : (

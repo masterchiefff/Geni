@@ -5,6 +5,7 @@ import { Headset, Ticket, LayoutDashboard, Phone, Activity, Clock, Settings, Men
 import { Button } from "@/components/ui/button";
 
 import SideBarItem from './sidebar-item';
+import Link from 'next/link';
 
 export default function SideBar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -39,7 +40,7 @@ export default function SideBar() {
       <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-white mb-6">
         <Menu className="w-5 h-5" />
       </Button>
-      <div className="flex-1 flex flex-col items-start justify-start w-full space-y-2">
+      <div className="flex-1 flex flex-col items-center justify-center w-full space-y-2">
         <div>
 
         {menuItems.map((menuItem, index) => (
@@ -58,10 +59,10 @@ export default function SideBar() {
           {isSidebarOpen && <span className="ml-3 text-sm">Home</span>}
         </Button> */}
     </div>
-    <Button variant="ghost" className={`flex items-center justify-start w-full mt-auto py-2 ${isSidebarOpen ? 'px-3' : 'justify-center'}`}>
+    <Link variant="ghost" href="/settings" className={`flex items-center justify-start w-full mt-auto py-2 ${isSidebarOpen ? 'px-3' : 'justify-center'}`}>
       <Settings className="w-5 h-5" />
       {isSidebarOpen && <span className="ml-3 text-sm">Settings</span>}
-    </Button>
+    </Link>
   </aside>
   )
 }
