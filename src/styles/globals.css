@@ -67,3 +67,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+body {
+  font-family: var(--font-sans);
+}
+#tickets {
+  font-family: var(--font-sans) !important;  /* Ensure it takes priority */
+}

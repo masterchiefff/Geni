@@ -3,13 +3,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, X } from "@/components/ui/dropdown-menu"
 import { Download, Columns } from "lucide-react";
 
 import MainLayout from '@/components/layout/main-layout';
 
 export default function Calls() {
+    const [isLeftSidebarOpen, setisLeftSidebarOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [singleCallSearch, setSingleCallSearch] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
@@ -24,6 +28,7 @@ export default function Calls() {
       cost: true,
       issue: true,
     })
+    const [selectedCall, setSelectedCall] = useState(null)
 
     const calls = [
         { id: 1, customerNo: '+1 (555) 123-4567', callStart: '2023-06-15 09:30:00', callEnd: '2023-06-15 09:45:30', duration: 930, status: 'Complete', cost: '$12.50', ticketId: 'T1001' },
@@ -59,8 +64,13 @@ export default function Calls() {
         setVisibleColumns(prev => ({ ...prev, [column]: !prev[column] }))
     }
 
+    const toggleSidebar = () => setisLeftSidebarOpen(!isLeftSidebarOpen)
+
+    const agents = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Emily Brown']
+
     return (
-        <MainLayout >
+      <>
+        <MainLayout pageTitle="Geni - Calls">
         <div className='flex-1 overflow-auto p-6'>
         <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Calls</h1>
@@ -138,7 +148,10 @@ export default function Calls() {
                     {visibleColumns.cost && <TableCell>{call.cost}</TableCell>}
                     {visibleColumns.issue && (
                       <TableCell>
-                        <Button variant="link" className="p-0 h-auto font-normal">
+                        <Button variant="link" className="p-0 h-auto font-normal" onClick={() => {
+                          setSelectedCall(call)
+                          setisLeftSidebarOpen(true)
+                        }}>
                           View Ticket
                         </Button>
                       </TableCell>
@@ -179,5 +192,85 @@ export default function Calls() {
             </div>
         </div>
         </MainLayout>
+
+        {isLeftSidebarOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setisLeftSidebarOpen(false)}>
+            <div className="absolute right-0 top-0 bottom-0 w-96 bg-white shadow-lg z-50" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4">
+                {/* <Button variant="ghost" onClick={() => setisLeftSidebarOpen(false)} className="absolute top-4 right-4">
+                  <X className="h-6 w-6" />
+                </Button> */}
+                <h2 className="text-2xl font-bold mb-4">Call Details</h2>
+                {selectedCall && (
+                  <div className="space-y-4">
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <h3 className="font-semibold">Customer Information</h3>
+                      <p><span className="font-bold">Phone:</span> {selectedCall.customerNo}</p>
+                      <p><span className="font-bold">Call Start:</span> {selectedCall.callStart}</p>
+                      <p><span className="font-bold">Call End:</span> {selectedCall.callEnd || 'Ongoing'}</p>
+                      <p><span className="font-bold">Duration:</span> {selectedCall.duration ? `${selectedCall.duration}s` : 'N/A'}</p>
+                      <p><span className="font-bold">Status:</span> {selectedCall.status}</p>
+                      <p><span className="font-bold">Cost:</span> {selectedCall.cost}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-2">Recorded Call</h3>
+                      <audio controls className="w-full">
+                        <source src="/path-to-audio-file.mp3" type="audio/mpeg" />
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                    <Dialog className="tickets">
+                      <DialogTrigger asChild>
+                        <Button className="w-full">Create Ticket</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Ticket</DialogTitle>
+                        </DialogHeader>
+                        <form className="space-y-4">
+                          <div>
+                            <Label htmlFor="name">Name</Label>
+                            <Input id="name" />
+                          </div>
+                          <div>
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea id="description" />
+                          </div>
+                          <div>
+                            <Label htmlFor="status">Status</Label>
+                            <Select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="resolved">Resolved</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label htmlFor="assignee">Assignee</Label>
+                            <Select>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select assignee" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {agents.map((agent) => (
+                                  <SelectItem key={agent} value={agent}>{agent}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button type="submit">Create Ticket</Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     )
 }

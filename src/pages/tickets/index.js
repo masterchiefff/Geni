@@ -19,7 +19,7 @@ export default function Tickets(){
   ]
 
   return(
-    <MainLayout > 
+    <MainLayout pageTitle="Geni - Tickets"> 
       <div className="w-1/3 bg-white p-4 overflow-auto">
         <h2 className="font-semibold mb-4">New Tickets <ChevronDown className="inline-block ml-2 h-4 w-4" /></h2>
         <ScrollArea className="h-[calc(100vh-200px)]">
@@ -75,7 +75,7 @@ export default function Tickets(){
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
-            Select a customer to view details
+            Select a ticket to view details
           </div>
         )}
       </div>

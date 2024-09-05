@@ -52,7 +52,7 @@ export default function Agents() {
   }
 
   return (
-    <MainLayout>
+    <MainLayout pageTitle="Geni - Agents">
         <div className="flex-1 overflow-auto p-6">
             <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Manage Agents</h1>

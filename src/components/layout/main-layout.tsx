@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Montserrat as FontSans } from "next/font/google";
 import { Search, ChevronDown, Home, MessageSquare, Activity, Clock } from 'lucide-react'
 
@@ -8,16 +8,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
 import CallWidget from '@/components/shared-components/callWidget';
-import SideBar from '@//components/shared-components/SideBar'
+import SideBar from '@/components/shared-components/SideBar'
 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
 })
 
-export default function MainLayout({children}){
+export default function MainLayout({ children, pageTitle = "Geni" }) {
+  // Update tab title dynamically
+  useEffect(() => {
+    document.title = pageTitle;
+  }, [pageTitle]);
 
-  return(
+  return (
     <div className={cn("flex min-h-screen bg-gray-100", fontSans.className)}>
       <SideBar />
       <div className="flex-1 flex flex-col">
@@ -47,7 +51,7 @@ export default function MainLayout({children}){
         <main className="flex-1 flex overflow-hidden">
           {children}
         </main>
-        
+
         <CallWidget />
 
         <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4">
@@ -68,5 +72,5 @@ export default function MainLayout({children}){
         </div>
       </div>
     </div>
-  )
+  );
 }

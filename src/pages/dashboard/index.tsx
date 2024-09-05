@@ -9,7 +9,7 @@ import MainLayout from '@/components/layout/main-layout';
 export default function Dashboard() {
 
   return (
-    <MainLayout >
+    <MainLayout pageTitle="Geni - Home">
       <div className='flex-1 overflow-auto p-6'>
 
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
