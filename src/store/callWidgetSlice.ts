@@ -1,4 +1,5 @@
-// store/callWidgetSlice.ts
+// callWidgetSlice.ts
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface CallWidgetState {
@@ -6,6 +7,7 @@ interface CallWidgetState {
   isKeypadVisible: boolean;
   dialedNumber: string;
   isCalling: boolean;
+  incomingNumber: string | null;
 }
 
 const initialState: CallWidgetState = {
@@ -13,6 +15,7 @@ const initialState: CallWidgetState = {
   isKeypadVisible: false,
   dialedNumber: '',
   isCalling: false,
+  incomingNumber: null,
 };
 
 const callWidgetSlice = createSlice({
@@ -21,9 +24,9 @@ const callWidgetSlice = createSlice({
   reducers: {
     toggleCall(state) {
       state.isCallActive = !state.isCallActive;
-      state.isKeypadVisible = false;
-      state.isCalling = false;
-      state.dialedNumber = '';
+      if (!state.isCallActive) {
+        state.incomingNumber = null;
+      }
     },
     handleDial(state, action: PayloadAction<string>) {
       state.dialedNumber += action.payload;
@@ -36,7 +39,16 @@ const callWidgetSlice = createSlice({
     },
     initiateCall(state) {
       state.isCalling = true;
-      state.isKeypadVisible = false;
+    },
+    receiveCall(state, action: PayloadAction<string>) {
+      state.incomingNumber = action.payload;
+      state.isCallActive = true;
+    },
+    endCall(state) {
+      state.isCalling = false;
+      state.dialedNumber = '';
+      state.incomingNumber = null;
+      state.isCallActive = false;
     },
     setCallWidgetState(state, action: PayloadAction<Partial<CallWidgetState>>) {
       return { ...state, ...action.payload };
@@ -50,6 +62,8 @@ export const {
   clearDialedNumber,
   toggleKeypad,
   initiateCall,
+  receiveCall,
+  endCall,
   setCallWidgetState,
 } = callWidgetSlice.actions;
 

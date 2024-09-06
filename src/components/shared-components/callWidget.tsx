@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
 import { RootState, AppDispatch } from '@/store/store';
 import { Button } from '@/components/ui/button';
-import { Phone, Mic, Grid, VolumeX, PhoneOff } from 'lucide-react';
+import { Input } from "@/components/ui/input"
+import { Phone, Mic, Grid, VolumeX, PhoneOff, X, Volume2 } from 'lucide-react';
 import {
   toggleCall,
   handleDial,
@@ -11,178 +11,162 @@ import {
   toggleKeypad,
   initiateCall,
   setCallWidgetState,
+  receiveCall,
+  endCall,
 } from '@/store/callWidgetSlice';
 
-const CallWidget: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { isCallActive, isKeypadVisible, dialedNumber, isCalling } = useSelector(
-    (state: RootState) => state.callWidget
-  );
+export default function CallWidget(){
+  const [isCallActive, setIsCallActive] = useState(false)
+  const [isKeypadOpen, setIsKeypadOpen] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [isMuted, setIsMuted] = useState(false)
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false)
 
-  const loadStateFromLocalStorage = () => {
-    const savedState = JSON.parse(localStorage.getItem('callWidgetState') || '{}');
-    dispatch(setCallWidgetState(savedState));
-  };
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const saveStateToLocalStorage = () => {
-    const state = {
-      isCallActive,
-      isKeypadVisible,
-      dialedNumber,
-      isCalling,
-    };
-    localStorage.setItem('callWidgetState', JSON.stringify(state));
-  };
-
-  // API Call: Dial Number
-  const dialNumberApi = async (number: string) => {
-    try {
-      const response = await axios.post('/api/dial', { number });
-      console.log('Dial response:', response.data);
-    } catch (error) {
-      console.error('Error dialing number:', error);
+  const toggleCall = () => {
+    if (isCallActive) {
+      setIsCallActive(false)
+      setIsKeypadOpen(false)
+      setPhoneNumber('')
+    } else {
+      setIsKeypadOpen(!isKeypadOpen)
     }
-  };
+  }
 
-  // API Call: Initiate Call
-  const initiateCallApi = async (number: string) => {
-    try {
-      const response = await axios.post('/api/call', { number });
-      console.log('Call initiated:', response.data);
-      dispatch(initiateCall());
-    } catch (error) {
-      console.error('Error initiating call:', error);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setNewAgent(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSelectChange = (name, value) => {
+    setNewAgent(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleAddAgent = (e) => {
+    e.preventDefault()
+    const id = agents.length + 1
+    setAgents(prev => [...prev, { id, ...newAgent }])
+    setNewAgent({ name: '', email: '', role: '', status: 'Active' })
+    setIsDialogOpen(false)
+  }
+
+  const handleDeleteAgent = (id) => {
+    setAgents(agents.filter(agent => agent.id !== id))
+  }
+
+  const handleKeypadClick = (value) => {
+    setPhoneNumber(prev => prev + value)
+  }
+
+  const handleClear = () => {
+    setPhoneNumber(prev => prev.slice(0, -1))
+  }
+
+  const handleCall = () => {
+    if (phoneNumber) {
+      setIsCallActive(true)
+      setIsKeypadOpen(false)
     }
-  };
+  }
+
+  const handleKeyDown = useCallback((e) => {
+    if (isKeypadOpen && !isCallActive) {
+      if (e.key >= '0' && e.key <= '9') {
+        setPhoneNumber(prev => prev + e.key)
+      } else if (e.key === 'Backspace') {
+        setPhoneNumber(prev => prev.slice(0, -1))
+      } else if (e.key === 'Enter') {
+        handleCall()
+      }
+    }
+  }, [isKeypadOpen, isCallActive])
 
   useEffect(() => {
-    loadStateFromLocalStorage();
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const validKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '#'];
-      if (validKeys.includes(event.key)) {
-        dispatch(handleDial(event.key));
-        dialNumberApi(event.key);
-      }
-
-      if (event.key === 'Backspace') {
-        dispatch(clearDialedNumber());
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
-    saveStateToLocalStorage();
-  }, [isCallActive, isKeypadVisible, dialedNumber, isCalling]);
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleKeyDown])
 
   return (
     <div className="fixed bottom-20 right-4 sm:bottom-8 sm:right-8">
-      {/* Main Call Button */}
       <Button
         variant="primary"
         className={`rounded-full bg-green-500 text-white hover:bg-green-600 w-16 h-16 flex items-center justify-center shadow-lg ${isCallActive ? 'bg-red-500 hover:bg-red-600' : ''}`}
-        onClick={() => dispatch(toggleCall())}
+        onClick={toggleCall}
       >
-        <Grid className="w-6 h-6" />
+        {isCallActive ? <Phone className="w-8 h-8" /> : <Grid className="w-8 h-8" />}
       </Button>
-
-      {/* Expanded Call Area */}
+      {isKeypadOpen && !isCallActive && (
+        <div className="absolute bottom-full right-0 mb-2 bg-gray-900 text-white rounded-lg shadow-lg p-4 w-64">
+          <div className="mb-4">
+            <Input
+              value={phoneNumber}
+              readOnly
+              className="text-right text-xl bg-gray-800 border-none text-white"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((key) => (
+              <Button
+                key={key}
+                variant="ghost"
+                className="text-white text-xl h-12"
+                onClick={() => handleKeypadClick(key)}
+              >
+                {key}
+              </Button>
+            ))}
+          </div>
+          <div className="flex justify-between mt-4">
+            <Button variant="ghost" className="text-white" onClick={handleClear}>
+              <X className="w-6 h-6" />
+            </Button>
+            <Button variant="primary" className="bg-green-500 hover:bg-green-600" onClick={handleCall}>
+              <Phone className="w-6 h-6" />
+            </Button>
+          </div>
+        </div>
+      )}
       {isCallActive && (
-        <div
-          className={`absolute transition-all bottom-0 right-20 duration-500 ease-in-out bg-gray-900 text-white rounded-lg shadow-lg p-4 w-72 transform origin-bottom ${
-            isCallActive ? 'scale-100' : 'scale-0'
-          }`}
-        >
-          {!isCalling ? (
-            <>
-              {/* Keypad */}
-              <div className="relative">
-                {/* Keypad Screen */}
-                <div className="bg-gray-700 rounded-lg p-2 text-center text-lg mb-4">
-                  {dialedNumber || 'Enter number'}
-                </div>
-
-                {/* Keypad Grid */}
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((key) => (
-                    <Button
-                      key={key}
-                      variant="ghost"
-                      className="bg-gray-800 text-white border border-gray-600 rounded-full py-4 flex items-center justify-center"
-                      onClick={() => {
-                        dispatch(handleDial(key));
-                        dialNumberApi(key); 
-                      }}
-                    >
-                      {key}
-                    </Button>
-                  ))}
-                </div>
-
-                {/* Call button */}
-                <div className="flex justify-between mt-4">
-                  <Button
-                    variant="outline"
-                    className="bg-gray-700 text-white w-full mr-2 rounded-full"
-                    onClick={() => dispatch(clearDialedNumber())}
-                  >
-                    Clear
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="bg-green-500 text-white w-full rounded-full"
-                    onClick={() => initiateCallApi(dialedNumber)} // Send API request on call
-                  >
-                    <Phone className="w-5 h-5" />
-                    <span className="ml-2">Call</span>
-                  </Button>
-                </div>
-
-                {/* Controls at the bottom */}
-                {/* <div className="flex justify-around items-center mt-4">
-                  <Button
-                    variant="ghost"
-                    className="text-white rounded-full p-2 bg-gray-800"
-                    onClick={() => dispatch(toggleKeypad())}
-                  >
-                    <Grid className="w-6 h-6" />
-                  </Button>
-                </div> */}
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Display Dialed Number & End Call */}
-              <div className="text-center text-xl font-bold mb-4">Calling...</div>
-
-              <div className="text-center text-xl mb-4">{dialedNumber || 'No dialed Number...'}</div>
-              {/* Controls at the bottom */}
-              <div className="flex justify-around items-center mt-4">
-                <Button variant="ghost" className="text-white rounded-full p-2 bg-gray-800">
-                  <Mic className="w-6 h-6" />
-                </Button>
-                <Button
-                  variant="primary"
-                  className="bg-red-500 text-white rounded-full flex items-center justify-center"
-                  onClick={() => dispatch(toggleCall())}
-                >
-                  <PhoneOff className="w-6 h-6" />
-                </Button>
-                <Button variant="ghost" className="text-white rounded-full p-2 bg-gray-800">
-                  <VolumeX className="w-6 h-6" />
-                </Button>
-              </div>
-            </>
-          )}
+        <div className="absolute bottom-full right-0 mb-2 bg-gray-900 text-white rounded-lg shadow-lg p-4 w-64">
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-400">Calling</p>
+            <p className="text-xl font-bold">{phoneNumber}</p>
+          </div>
+          <div className="flex justify-around items-center">
+            <Button
+              variant="ghost"
+              className="text-white flex flex-col items-center"
+              onClick={() => setIsMuted(!isMuted)}
+            >
+              <Mic className={`w-6 h-6 ${isMuted ? 'text-red-500' : ''}`} />
+              {/* <span className="text-xs mt-1">Mute</span> */}
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-white flex flex-col items-center"
+              onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+            >
+              {isSpeakerOn ? <Volume2 className="w-6 h-6 text-green-500" /> : <VolumeX className="w-6 h-6" />}
+              {/* <span className="text-xs mt-1">Speaker</span> */}
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-white flex flex-col items-center"
+              onClick={() => {
+                setIsCallActive(false)
+                setPhoneNumber('')
+              }}
+            >
+              <PhoneOff className="w-6 h-6 text-red-500" />
+              {/* <span className="text-xs mt-1">End Call</span> */}
+            </Button>
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-export default CallWidget;
