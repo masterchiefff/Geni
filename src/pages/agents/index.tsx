@@ -24,9 +24,10 @@ export default function Agents() {
     const token = useSelector((state) => state.auth.token); 
     const [agents, setAgents] = useState([]);
     const [newAgent, setNewAgent] = useState({ name: '', phone: '', description: '', status: 'Active' });
+    const [editAgent, setEditAgent] = useState(null); 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-    console.log(agents)
     useEffect(() => {
         const fetchAgents = async () => {
             if (!token) return; 
@@ -43,7 +44,7 @@ export default function Agents() {
         };
 
         fetchAgents();
-    }, [token]); 
+    }, [token]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -63,17 +64,35 @@ export default function Agents() {
                 },
             });
 
-            // Log response to check if the agent data is correct
             console.log("Agent created:", response.data);
 
-            // Update the state immediately with the new agent
             setAgents(prev => [...prev, response.data]);
 
-            // Reset form and close dialog
-            setNewAgent({ name: '', phone: '', role: '', status: 'Active' });
+            setNewAgent({ name: '', phone: '', description: '', status: 'Active' });
             setIsDialogOpen(false);
         } catch (error) {
             console.error("Error adding agent:", error);
+        }
+    };
+
+    const handleEditAgent = async (e) => {
+        e.preventDefault();
+        if (!editAgent) return;
+
+        try {
+            const response = await axios.put(`https://api.geni.africa/agents/${editAgent.id}`, editAgent, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            console.log("Agent updated:", response.data);
+
+            setAgents(agents.map(agent => (agent.id === response.data.id ? response.data : agent)));
+            setEditAgent(null);
+            setIsEditDialogOpen(false);
+        } catch (error) {
+            console.error("Error updating agent:", error);
         }
     };
 
@@ -84,7 +103,6 @@ export default function Agents() {
                     'Authorization': `Bearer ${token}`, 
                 },
             });
-            // Remove the deleted agent from the state
             setAgents(agents.filter(agent => agent.id !== id));
         } catch (error) {
             console.error("Error deleting agent:", error);
@@ -117,8 +135,8 @@ export default function Agents() {
                                     <Input id="phone" name="phone" type="tel" value={newAgent.phone} onChange={handleInputChange} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="role">Role</Label>
-                                    <Select name="role" value={newAgent.description} onValueChange={(value) => handleSelectChange('description', value)}>
+                                    <Label htmlFor="description">Role</Label>
+                                    <Select name="description" value={newAgent.description} onValueChange={(value) => handleSelectChange('description', value)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a role" />
                                         </SelectTrigger>
@@ -149,6 +167,62 @@ export default function Agents() {
                         </DialogContent>
                     </Dialog>
                 </div>
+
+                {/* Edit Agent Dialog */}
+                <Dialog open={isEditDialogOpen} onOpenChange={() => setIsEditDialogOpen(false)} className={cn("", fontSans.className)}>
+                    {/* <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm" onClick={() => setIsEditDialogOpen(true)}>
+                            Edit
+                        </Button>
+                    </DialogTrigger> */}
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Edit Agent</DialogTitle>
+                        </DialogHeader>
+                        {editAgent && (
+                            <form onSubmit={handleEditAgent} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-name">Name</Label>
+                                    <Input id="edit-name" name="name" value={editAgent.name} onChange={(e) => setEditAgent(prev => ({ ...prev, name: e.target.value }))} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-phone">Phone</Label>
+                                    <Input id="edit-phone" name="phone" type="tel" value={editAgent.phone} onChange={(e) => setEditAgent(prev => ({ ...prev, phone: e.target.value }))} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-description">Role</Label>
+                                    <Select name="description" value={editAgent.description} onValueChange={(value) => setEditAgent(prev => ({ ...prev, description: value }))}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Junior Agent">Junior Agent</SelectItem>
+                                            <SelectItem value="Senior Agent">Senior Agent</SelectItem>
+                                            <SelectItem value="Team Lead">Team Lead</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="edit-status">Status</Label>
+                                    <Select name="status" value={editAgent.status} onValueChange={(value) => setEditAgent(prev => ({ ...prev, status: value }))}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="available">Available</SelectItem>
+                                            <SelectItem value="Away">Away</SelectItem>
+                                            <SelectItem value="Offline">Offline</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <Button type="submit" className="w-full">
+                                    Save Changes
+                                </Button>
+                            </form>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
                 <Card>
                     <CardHeader>
                         <CardTitle>Agent List</CardTitle>
@@ -182,7 +256,10 @@ export default function Agents() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex space-x-2">
-                                                    <Button variant="ghost" size="sm">
+                                                    <Button variant="ghost" size="sm" onClick={() => {
+                                                        setEditAgent(agent);
+                                                        setIsEditDialogOpen(true);
+                                                    }}>
                                                         <Edit className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="ghost" size="sm" onClick={() => handleDeleteAgent(agent.id)}>
