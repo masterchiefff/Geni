@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Montserrat as FontSans } from "next/font/google";
-import { Search, ChevronDown,LayoutDashboard, Headset, Bell, Ticket, Phone, PhoneIncoming, LogOut, PhoneMissed } from 'lucide-react'
-import { useDispatch } from 'react-redux';
+import { Search, ChevronDown,LayoutDashboard, Headset, Bell, Ticket, Phone, Settings, HelpCircle, LogOut, PhoneMissed, User } from 'lucide-react'
+import { useDispatch, useSelector } from 'react-redux';
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuShortcut, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 import CallWidget from '@/components/shared-components/callWidget';
 import SideBar from '@/components/shared-components/SideBar'
@@ -45,6 +45,9 @@ const menuItems = [
 
 export default function MainLayout({ children, pageTitle = "Geni" }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+
+  const user = useSelector((state) => state.auth.user);
 
   const [searchTerm, setSearchTerm] = useState('')
   useEffect(() => {
@@ -58,6 +61,19 @@ export default function MainLayout({ children, pageTitle = "Geni" }) {
     dispatch(clearToken());
     router.push('/'); 
   };
+
+  const getInitials = (name, profilePictureExists) => {
+    if (!profilePictureExists) {
+      const names = name.split(' ');
+      const initials = names.length >= 2 ? 
+        names[0].charAt(0).toUpperCase() + names[1].charAt(0).toUpperCase() : 
+        names[0].charAt(0).toUpperCase();
+      return initials;
+    }
+    return '';
+  };
+  
+  const initials = getInitials(user?.name || '', false); 
 
   return (
     <div className={cn("flex min-h-screen bg-gray-100", fontSans.className)}>
@@ -110,19 +126,45 @@ export default function MainLayout({ children, pageTitle = "Geni" }) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DropdownMenu>
+            
+            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
               <DropdownMenuTrigger asChild>
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
+                    <AvatarFallback>{ initials }</AvatarFallback>
+                  </Avatar>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Call Notifications</DropdownMenuLabel>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.name || 'User'}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email || 'User'}</p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4"/>
-                  <span>Logout</span>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                    <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                    <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    <span>Help</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-600 pointer" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                  <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

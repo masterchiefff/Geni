@@ -4,13 +4,13 @@ import Link from "next/link";
 import { Montserrat as FontSans } from "next/font/google";
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { setToken } from '@/store/authSlice'; 
 import { useRouter } from 'next/router';
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { setToken, setUser } from '@/store/authSlice';
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -22,11 +22,11 @@ export default function Home() {
   const router = useRouter(); 
   const token = useSelector((state) => state.auth.token); 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("")
 
   const generateToken = async () => {
     try {
-      const response = await axios.post('https://2165-217-21-116-242.ngrok-free.app/tanda/generatetoken', {});
+      const response = await axios.post('https://api.geni.africa/generatetoken', {});
       dispatch(setToken(response.data.token)); 
     } catch (error) {
       console.error('Error generating token:', error);
@@ -44,10 +44,10 @@ export default function Home() {
     let config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: 'https://2165-217-21-116-242.ngrok-free.app/tanda/users/login',
+      url: 'https://api.geni.africa/login',
       headers: { 
         'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${token}` // Use the token from Redux
+        'Authorization': `Bearer ${token}` 
       },
       data: data,
     };
@@ -55,10 +55,10 @@ export default function Home() {
     try {
       const response = await axios.request(config);
       console.log(JSON.stringify(response.data));
-
-      console.log(response.data.info)
       
       if (response.data.info == 'login success') {
+        dispatch(setToken(response.data.token));
+        dispatch(setUser({ email: response.data.data.email, name: response.data.data.name }));
         router.push('/dashboard'); 
       }
     } catch (error) {
