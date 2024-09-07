@@ -1,11 +1,10 @@
-// src/store/authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
     token: null,
-    user: null, // Add user information
+    user: null,
   },
   reducers: {
     setToken(state, action) {
@@ -16,7 +15,7 @@ const authSlice = createSlice({
     },
     clearToken(state) {
       state.token = null;
-      state.user = null; // Clear user information on logout
+      state.user = null;
     },
   },
 });

@@ -11,8 +11,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 
 import CallWidget from '@/components/shared-components/callWidget';
 import SideBar from '@/components/shared-components/SideBar'
-import SideBarItem from '../shared-components/sidebar-item';
-import { clearToken } from '@/store/authSlice'; 
+import SideBarItem from '@/components/shared-components/sidebar-item';
+import { clearToken, setUser, setToken } from '@/store/authSlice'; 
 import { useRouter } from 'next/router';
 
 const fontSans = FontSans({
@@ -46,20 +46,33 @@ const menuItems = [
 export default function MainLayout({ children, pageTitle = "Geni" }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-
-  const user = useSelector((state) => state.auth.user);
-
   const [searchTerm, setSearchTerm] = useState('')
-  useEffect(() => {
-    document.title = pageTitle;
-  }, [pageTitle]);
-
+  const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
   const router = useRouter();
 
+  useEffect(() => {
+      document.title = pageTitle;
+  }, [pageTitle]);
+
+  useEffect(() => {
+      const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+      const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
+      const storedToken = sessionStorage.getItem('token');
+
+      if (isAuthenticated && storedToken && storedUser) {
+          dispatch(setUser(storedUser));
+          dispatch(setToken(storedToken));
+      }
+  }, [dispatch]);
+
   const handleLogout = () => {
-    dispatch(clearToken());
-    router.push('/'); 
+      dispatch(clearToken());
+      sessionStorage.removeItem('isAuthenticated');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      router.push('/');
   };
 
   const getInitials = (name, profilePictureExists) => {
@@ -72,8 +85,9 @@ export default function MainLayout({ children, pageTitle = "Geni" }) {
     }
     return '';
   };
-  
+
   const initials = getInitials(user?.name || '', false); 
+
 
   return (
     <div className={cn("flex min-h-screen bg-gray-100", fontSans.className)}>

@@ -21,8 +21,11 @@ export default function Home() {
   const dispatch = useDispatch();
   const router = useRouter(); 
   const token = useSelector((state) => state.auth.token); 
+
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("")
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const generateToken = async () => {
     try {
@@ -35,40 +38,51 @@ export default function Home() {
 
   const handleLogin = async (event) => {
     event.preventDefault();
-
-    let data = JSON.stringify({
-      email: email,
-      password: password,
-    });
-
-    let config = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: 'https://api.geni.africa/login',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${token}` 
-      },
-      data: data,
-    };
-
+    setLoading(true);
+    setErrorMessage(""); // Reset error message
+  
+    const data = JSON.stringify({ email, password });
+  
     try {
-      const response = await axios.request(config);
-      console.log(JSON.stringify(response.data));
-      
-      if (response.data.info == 'login success') {
+      const response = await axios.post('https://api.geni.africa/login', data, {
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${token}` 
+        },
+      });
+  
+      const saveUser = {
+        email: response.data.data.email,
+        name: response.data.data.name,
+        token: token,
+      };
+  
+      if (response.data.info === 'login success') {
+        sessionStorage.setItem('isAuthenticated', 'true');
+        sessionStorage.setItem('user', JSON.stringify(saveUser));
+        sessionStorage.setItem('token', token); 
+  
+        // Dispatch token and user to Redux store
         dispatch(setToken(response.data.token));
-        dispatch(setUser({ email: response.data.data.email, name: response.data.data.name }));
+        dispatch(setUser(saveUser));
+  
+        // Redirect to dashboard
         router.push('/dashboard'); 
+      } else {
+        setErrorMessage('Login failed. Please check your credentials.');
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      setErrorMessage('An error occurred during login. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
-
+  
   useEffect(() => {
+    // Check if the user is already authenticated
     generateToken();
-  }, []);
+  }, [router]);
 
   return (
     <div className={cn("w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen", fontSans.className)}>
@@ -79,6 +93,7 @@ export default function Home() {
             <p className="text-balance text-muted-foreground">
               Enter your email below to login to your account
             </p>
+            {errorMessage && <p className="text-red-500">{errorMessage}</p>} {/* Error message display */}
           </div>
           <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
@@ -110,8 +125,8 @@ export default function Home() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
             <Button variant="outline" className="w-full">
               Login with Google
