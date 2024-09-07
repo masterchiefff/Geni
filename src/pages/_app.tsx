@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Provider } from "react-redux";
 
-import { store } from '@/store/store';
+import store from '@/store/store';
 
 import { Montserrat as FontSans } from "next/font/google";
 import { cn } from "@/lib/utils"; 

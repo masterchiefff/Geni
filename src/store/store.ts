@@ -1,12 +1,13 @@
-// store/store.ts
 import { configureStore } from '@reduxjs/toolkit';
-import callWidgetReducer from './callWidgetSlice';
+import callReducer from './callWidgetSlice'; 
 
-export const store = configureStore({
+const store = configureStore({
   reducer: {
-    callWidget: callWidgetReducer,
+    call: callReducer,
   },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export default store;

@@ -1,21 +1,69 @@
-import Image from "next/image"
-import Link from "next/link"
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { Montserrat as FontSans } from "next/font/google";
+import axios from 'axios';
 
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
-})
+});
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [token, setToken] = useState(""); 
+
+  const generateToken = async () => {
+    try {
+      const response = await axios.post('https://2165-217-21-116-242.ngrok-free.app/tanda/generatetoken', {});
+      setToken(response.data.token);
+    } catch (error) {
+      console.error('Error generating token:', error);
+    }
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+
+    let data = JSON.stringify({
+      email: email,
+      password: password,
+    });
+
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://2165-217-21-116-242.ngrok-free.app/tanda/users/login',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
+      },
+      data: data,
+    };
+
+    console.log(config)
+
+    try {
+      const response = await axios.request(config);
+      console.log(JSON.stringify(response.data));
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    generateToken();
+  }, []);
+
   return (
-    <div className={cn("w-full lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]", fontSans.className)}>
+    <div className={cn("w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen", fontSans.className)}>
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
@@ -24,7 +72,7 @@ export default function Home() {
               Enter your email below to login to your account
             </p>
           </div>
-          <div className="grid gap-4">
+          <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -32,6 +80,8 @@ export default function Home() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
@@ -44,7 +94,13 @@ export default function Home() {
                   Forgot your password?
                 </Link>
               </div>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
             <Button type="submit" className="w-full">
               Login
@@ -52,7 +108,7 @@ export default function Home() {
             <Button variant="outline" className="w-full">
               Login with Google
             </Button>
-          </div>
+          </form>
           <div className="mt-4 text-center text-sm">
             Don&apos;t have an account?{" "}
             <Link href="#" className="underline">
@@ -71,5 +127,5 @@ export default function Home() {
         />
       </div>
     </div>
-  )
+  );
 }

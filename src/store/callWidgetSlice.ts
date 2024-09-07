@@ -1,70 +1,42 @@
-// callWidgetSlice.ts
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface CallWidgetState {
+interface CallState {
   isCallActive: boolean;
-  isKeypadVisible: boolean;
-  dialedNumber: string;
-  isCalling: boolean;
-  incomingNumber: string | null;
+  isKeypadOpen: boolean;
+  phoneNumber: string;
+  isMuted: boolean;
+  isSpeakerOn: boolean;
 }
 
-const initialState: CallWidgetState = {
+const initialState: CallState = {
   isCallActive: false,
-  isKeypadVisible: false,
-  dialedNumber: '',
-  isCalling: false,
-  incomingNumber: null,
+  isKeypadOpen: false,
+  phoneNumber: '',
+  isMuted: false,
+  isSpeakerOn: false,
 };
 
 const callWidgetSlice = createSlice({
-  name: 'callWidget',
+  name: 'call',
   initialState,
   reducers: {
-    toggleCall(state) {
+    toggleCall: (state) => {
       state.isCallActive = !state.isCallActive;
-      if (!state.isCallActive) {
-        state.incomingNumber = null;
-      }
     },
-    handleDial(state, action: PayloadAction<string>) {
-      state.dialedNumber += action.payload;
+    setKeypadOpen: (state, action: PayloadAction<boolean>) => {
+      state.isKeypadOpen = action.payload;
     },
-    clearDialedNumber(state) {
-      state.dialedNumber = '';
+    setPhoneNumber: (state, action: PayloadAction<string>) => {
+      state.phoneNumber = action.payload;
     },
-    toggleKeypad(state) {
-      state.isKeypadVisible = !state.isKeypadVisible;
+    setIsMuted: (state, action: PayloadAction<boolean>) => {
+      state.isMuted = action.payload;
     },
-    initiateCall(state) {
-      state.isCalling = true;
-    },
-    receiveCall(state, action: PayloadAction<string>) {
-      state.incomingNumber = action.payload;
-      state.isCallActive = true;
-    },
-    endCall(state) {
-      state.isCalling = false;
-      state.dialedNumber = '';
-      state.incomingNumber = null;
-      state.isCallActive = false;
-    },
-    setCallWidgetState(state, action: PayloadAction<Partial<CallWidgetState>>) {
-      return { ...state, ...action.payload };
+    setIsSpeakerOn: (state, action: PayloadAction<boolean>) => {
+      state.isSpeakerOn = action.payload;
     },
   },
 });
 
-export const {
-  toggleCall,
-  handleDial,
-  clearDialedNumber,
-  toggleKeypad,
-  initiateCall,
-  receiveCall,
-  endCall,
-  setCallWidgetState,
-} = callWidgetSlice.actions;
-
+export const { toggleCall, setKeypadOpen, setPhoneNumber, setIsMuted, setIsSpeakerOn } = callWidgetSlice.actions;
 export default callWidgetSlice.reducer;
