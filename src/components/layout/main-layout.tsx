@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Montserrat as FontSans } from "next/font/google";
-import { Search, ChevronDown,LayoutDashboard, Headset, Bell, Ticket, Phone, PhoneIncoming, PhoneMissed } from 'lucide-react'
+import { Search, ChevronDown,LayoutDashboard, Headset, Bell, Ticket, Phone, PhoneIncoming, LogOut, PhoneMissed } from 'lucide-react'
+import { useDispatch } from 'react-redux';
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -11,6 +12,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import CallWidget from '@/components/shared-components/callWidget';
 import SideBar from '@/components/shared-components/SideBar'
 import SideBarItem from '../shared-components/sidebar-item';
+import { clearToken } from '@/store/authSlice'; 
+import { useRouter } from 'next/router';
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -47,6 +50,14 @@ export default function MainLayout({ children, pageTitle = "Geni" }) {
   useEffect(() => {
     document.title = pageTitle;
   }, [pageTitle]);
+
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    dispatch(clearToken());
+    router.push('/'); 
+  };
 
   return (
     <div className={cn("flex min-h-screen bg-gray-100", fontSans.className)}>
@@ -99,10 +110,22 @@ export default function MainLayout({ children, pageTitle = "Geni" }) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Avatar className="w-10 h-10">
-              <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
-              <AvatarFallback>U</AvatarFallback>
-            </Avatar>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="User" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Call Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4"/>
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
         <main className="flex-1 flex overflow-hidden">
