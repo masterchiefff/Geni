@@ -10,9 +10,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger, X } from "@/components/ui/dropdown-menu"
 import { Download, Columns } from "lucide-react";
 
+import { useDispatch, useSelector } from 'react-redux';
+
 import MainLayout from '@/components/layout/main-layout';
 
 export default function Calls() {
+    const dispatch = useDispatch();
+    // const [calls, setCalls] = useState([]);
     const [isLeftSidebarOpen, setisLeftSidebarOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [singleCallSearch, setSingleCallSearch] = useState('')
@@ -29,6 +33,8 @@ export default function Calls() {
       issue: true,
     })
     const [selectedCall, setSelectedCall] = useState(null)
+
+    const token = useSelector((state) => state.auth.token); 
 
     const calls = [
         { id: 1, customerNo: '+1 (555) 123-4567', callStart: '2023-06-15 09:30:00', callEnd: '2023-06-15 09:45:30', duration: 930, status: 'Complete', cost: '$12.50', ticketId: 'T1001' },

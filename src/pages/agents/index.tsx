@@ -23,25 +23,25 @@ export default function Agents() {
     const dispatch = useDispatch();
     const token = useSelector((state) => state.auth.token); 
     const [agents, setAgents] = useState([]);
-    const [newAgent, setNewAgent] = useState({ name: '', email: '', role: '', status: 'Active' });
+    const [newAgent, setNewAgent] = useState({ name: '', phone: '', description: '', status: 'Active' });
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+    console.log(agents)
     useEffect(() => {
         const fetchAgents = async () => {
-            if (!token) return; // Don't fetch if token is not available
+            if (!token) return; 
             try {
                 const response = await axios.get('https://api.geni.africa/agents', {
                     headers: {
-                        'Authorization': `Bearer ${token}`, // Use the token from Redux
+                        'Authorization': `Bearer ${token}`,
                     },
                 });
-                console.log("Fetched agents:", response.data); // Log the response data
                 setAgents(response.data);
             } catch (error) {
                 console.error("Error fetching agents:", error);
             }
         };
-        
+
         fetchAgents();
     }, [token]); 
 
@@ -59,11 +59,18 @@ export default function Agents() {
         try {
             const response = await axios.post('https://api.geni.africa/agents', newAgent, {
                 headers: {
-                    'Authorization': `Bearer ${token}`, // Use the token for adding a new agent
+                    'Authorization': `Bearer ${token}`,
                 },
             });
-            setAgents(prev => [...prev, response.data]); // Assuming the response contains the new agent
-            setNewAgent({ name: '', email: '', role: '', status: 'Active' });
+
+            // Log response to check if the agent data is correct
+            console.log("Agent created:", response.data);
+
+            // Update the state immediately with the new agent
+            setAgents(prev => [...prev, response.data]);
+
+            // Reset form and close dialog
+            setNewAgent({ name: '', phone: '', role: '', status: 'Active' });
             setIsDialogOpen(false);
         } catch (error) {
             console.error("Error adding agent:", error);
@@ -74,9 +81,10 @@ export default function Agents() {
         try {
             await axios.delete(`https://api.geni.africa/agents/${id}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`, // Use the token for deleting an agent
+                    'Authorization': `Bearer ${token}`, 
                 },
             });
+            // Remove the deleted agent from the state
             setAgents(agents.filter(agent => agent.id !== id));
         } catch (error) {
             console.error("Error deleting agent:", error);
@@ -105,12 +113,12 @@ export default function Agents() {
                                     <Input id="name" name="name" value={newAgent.name} onChange={handleInputChange} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input id="email" name="email" type="email" value={newAgent.email} onChange={handleInputChange} required />
+                                    <Label htmlFor="phone">Phone</Label>
+                                    <Input id="phone" name="phone" type="tel" value={newAgent.phone} onChange={handleInputChange} required />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="role">Role</Label>
-                                    <Select name="role" value={newAgent.role} onValueChange={(value) => handleSelectChange('role', value)}>
+                                    <Select name="role" value={newAgent.description} onValueChange={(value) => handleSelectChange('description', value)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a role" />
                                         </SelectTrigger>
@@ -128,7 +136,7 @@ export default function Agents() {
                                             <SelectValue placeholder="Select a status" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Active">Active</SelectItem>
+                                            <SelectItem value="available">Available</SelectItem>
                                             <SelectItem value="Away">Away</SelectItem>
                                             <SelectItem value="Offline">Offline</SelectItem>
                                         </SelectContent>
@@ -146,14 +154,14 @@ export default function Agents() {
                         <CardTitle>Agent List</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {agents.length === 0 ? ( // Check if there are no agents
+                        {agents.length === 0 ? ( 
                             <p className="text-center text-gray-500">No agents available. Please add some agents.</p>
                         ) : (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Name</TableHead>
-                                        <TableHead>Email</TableHead>
+                                        <TableHead>Phone</TableHead>
                                         <TableHead>Role</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Actions</TableHead>
@@ -163,11 +171,11 @@ export default function Agents() {
                                     {agents.map((agent) => (
                                         <TableRow key={agent.id}>
                                             <TableCell>{agent.name}</TableCell>
-                                            <TableCell>{agent.email}</TableCell>
-                                            <TableCell>{agent.role}</TableCell>
+                                            <TableCell>{agent.phone}</TableCell>
+                                            <TableCell>{agent.description}</TableCell>
                                             <TableCell>
                                                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                                    agent.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                                    agent.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
                                                     {agent.status}
                                                 </span>
