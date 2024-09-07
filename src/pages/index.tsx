@@ -3,9 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Montserrat as FontSans } from "next/font/google";
 import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { setToken } from '@/store/authSlice'; 
+import { useRouter } from 'next/router';
 
 import { cn } from "@/lib/utils";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,14 +18,16 @@ const fontSans = FontSans({
 });
 
 export default function Home() {
+  const dispatch = useDispatch();
+  const router = useRouter(); 
+  const token = useSelector((state) => state.auth.token); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState(""); 
 
   const generateToken = async () => {
     try {
       const response = await axios.post('https://2165-217-21-116-242.ngrok-free.app/tanda/generatetoken', {});
-      setToken(response.data.token);
+      dispatch(setToken(response.data.token)); 
     } catch (error) {
       console.error('Error generating token:', error);
     }
@@ -43,16 +47,20 @@ export default function Home() {
       url: 'https://2165-217-21-116-242.ngrok-free.app/tanda/users/login',
       headers: { 
         'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${token}` 
+        'Authorization': `Bearer ${token}` // Use the token from Redux
       },
       data: data,
     };
 
-    console.log(config)
-
     try {
       const response = await axios.request(config);
       console.log(JSON.stringify(response.data));
+
+      console.log(response.data.info)
+      
+      if (response.data.info == 'login success') {
+        router.push('/dashboard'); 
+      }
     } catch (error) {
       console.log(error);
     }
